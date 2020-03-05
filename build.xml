@@ -1,0 +1,24 @@
+<project name="klib-logger" default="jar" basedir=".">
+
+    <property name="src.dir" value="src" />
+    <property name="build.dir" value="build" />
+    <property name="class.dir" value="${build.dir}/classes" />
+    <property name="jar.dir" value="${build.dir}/jar" />
+
+    <target name="clean">
+        <delete dir="${build.dir}" />
+    </target>
+
+    <target name="init">
+        <mkdir dir="${class.dir}" />
+        <mkdir dir="${jar.dir}" />
+    </target>
+
+    <target name="compile" depends="clean,init">
+        <javac destdir="${class.dir}" srcdir="${src.dir}/com/klib/logger" />
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="${jar.dir}/klogger.jar" basedir="${class.dir}" />
+    </target>
+</project>
