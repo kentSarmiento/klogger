@@ -1,9 +1,17 @@
 <project name="klib-logger" default="jar" basedir=".">
 
     <property name="src.dir" value="src" />
+    <property name="test.dir" value="test" />
+    <property name="lib.dir" value="lib" />
     <property name="build.dir" value="build" />
     <property name="class.dir" value="${build.dir}/classes" />
     <property name="jar.dir" value="${build.dir}/jar" />
+    <property name="test.report.dir" value="${build.dir}/test-report" />
+
+    <path id="test.classpath">
+        <pathelement path="${class.dir}"/>
+        <fileset dir="${lib.dir}" includes="*.jar"/>
+    </path>
 
     <target name="clean">
         <delete dir="${build.dir}" />
@@ -12,13 +20,46 @@
     <target name="init">
         <mkdir dir="${class.dir}" />
         <mkdir dir="${jar.dir}" />
+        <mkdir dir="build/test-report" />
     </target>
 
     <target name="compile" depends="clean,init">
-        <javac destdir="${class.dir}" srcdir="${src.dir}/com/klib/logger" />
+        <javac destdir="${class.dir}" srcdir="${src.dir}" includeantruntime="false" />
+        <javac destdir="${class.dir}" classpathref="test.classpath" srcdir="${test.dir}" includeantruntime="false" />
     </target>
 
     <target name="jar" depends="compile">
         <jar destfile="${jar.dir}/klogger.jar" basedir="${class.dir}" />
     </target>
+
+    <!-- https://junit.org/junit5/docs/snapshot/user-guide/#running-tests-build-ant -->
+    <target name="test.junit.launcher" depends="compile">
+        <junitlauncher haltOnFailure="true" printSummary="true">
+            <classpath refid="test.classpath"/>
+            <testclasses outputdir="${test.report.dir}">
+                <fileset dir="${class.dir}">
+                    <include name="**/*Test.class"/>
+                </fileset>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
+                <listener type="legacy-plain" sendSysOut="true" />
+            </testclasses>
+        </junitlauncher>
+    </target>
+
+    <!-- https://junit.org/junit5/docs/current/user-guide/#running-tests-console-launcher -->
+    <target name="test.console.launcher" depends="compile">
+        <java classpathref="test.classpath" classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+            <arg value="--scan-classpath"/>
+            <arg line="--reports-dir ${test.report.dir}"/>
+        </java>
+        <junitreport todir="${test.report.dir}">
+            <fileset dir="${test.report.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${test.report.dir}"/>
+        </junitreport>
+    </target>
+
+    <target name="test" depends="test.junit.launcher, test.console.launcher" />
+
 </project>
